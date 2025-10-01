@@ -22,7 +22,9 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
           OUTNAME="crun_linux_${VERSION}_amd64"
+          export RUSTFLAGS="-C strip=symbols -C opt-level=z -C link-arg=-s";
           cargo build --release --target x86_64-unknown-linux-gnu
+          strip target/x86_64-unknown-linux-gnu/release/crun
           mkdir -p Releases
           cp target/x86_64-unknown-linux-gnu/release/crun Releases/$OUTNAME
 
@@ -46,7 +48,13 @@ jobs:
         run: |
           $version = "${{ github.ref }}".Replace("refs/tags/", "")
           $outname = "crun_windows_${version}_amd64.exe"
+          $env:RUSTFLAGS="-C strip=symbols -C opt-level=z -C link-arg=-s";
           cargo build --release --target x86_64-pc-windows-gnu
+          if (Get-Command strip -ErrorAction SilentlyContinue) {
+              strip target\x86_64-pc-windows-gnu\release\crun.exe
+          } else {
+              Write-Host "strip command not found, skipping stripping symbols. Maybe MSYS2 toolchain is not installed?"
+          }
           mkdir Releases
           Copy-Item "target\x86_64-pc-windows-gnu\release\crun.exe" "Releases\$outname"
 
@@ -70,7 +78,9 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
           OUTNAME="crun_darwin_${VERSION}_arm64"
+          export RUSTFLAGS="-C strip=symbols -C opt-level=z -C link-arg=-s";
           cargo build --release --target aarch64-apple-darwin
+          strip target/aarch64-apple-darwin/release/crun
           mkdir -p Releases
           cp target/aarch64-apple-darwin/release/crun Releases/$OUTNAME
 
