@@ -1,0 +1,82 @@
+name: Rust Multi-Platform Release
+
+on:
+  push:
+    tags:
+      - "v*" # Trigger on version tags like v1.0.0
+
+permissions:
+  contents: write # Required for release uploads
+
+jobs:
+  build-linux:
+    name: Build Linux Binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Rust
+        run: rustup target add x86_64-unknown-linux-gnu
+
+      - name: Build
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          OUTNAME="crun_linux_${VERSION}_amd64"
+          cargo build --release --target x86_64-unknown-linux-gnu
+          mkdir -p Releases
+          cp target/x86_64-unknown-linux-gnu/release/crun Releases/$OUTNAME
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Releases/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    name: Build Windows Binary
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Rust
+        run: rustup target add x86_64-pc-windows-gnu
+
+      - name: Build
+        run: |
+          $version = "${{ github.ref }}".Replace("refs/tags/", "")
+          $outname = "crun_windows_${version}_amd64.exe"
+          cargo build --release --target x86_64-pc-windows-gnu
+          mkdir Releases
+          Copy-Item "target\x86_64-pc-windows-gnu\release\crun.exe" "Releases\$outname"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Releases/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos:
+    name: Build macOS Binary
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Rust
+        run: rustup target add aarch64-apple-darwin
+
+      - name: Build
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          OUTNAME="crun_darwin_${VERSION}_arm64"
+          cargo build --release --target aarch64-apple-darwin
+          mkdir -p Releases
+          cp target/aarch64-apple-darwin/release/crun Releases/$OUTNAME
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Releases/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

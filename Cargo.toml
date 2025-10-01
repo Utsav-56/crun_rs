@@ -1,0 +1,16 @@
+[package]
+name = "crun"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+log = "0.4.28"
+
+[profile.release]
+opt-level = "z"        # Optimize for size (instead of speed)
+lto = true             # Link-time optimization
+codegen-units = 1      # Better optimization (slower compile, smaller binary)
+panic = "abort"        # Smaller panic handling
+strip = true           # (Rust 1.70+) Automatically strip symbols
+debug = false          # Do not include debug info
+overflow-checks = false # Disable integer overflow checks
