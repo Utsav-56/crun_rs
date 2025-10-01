@@ -1,9 +1,10 @@
 mod command_exists;
 mod run_in_terminal;
 
-use std::env;
+use std::{env, io};
 use std::fmt::Arguments;
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command, Stdio};
 use std::sync::LazyLock;
@@ -325,8 +326,6 @@ fn show_help() {
     println!("  -ntw, --new-terminal Run in new terminal");
 }
 
-use std::io::{self, Write};
-use log::log;
 
 struct Ulog {
     count: usize,
