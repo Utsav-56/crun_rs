@@ -1,5 +1,5 @@
+use crate::{LOG, command_exists};
 use std::process;
-use crate::{command_exists, LOG};
 
 pub fn detect_compiler(preferred: &str, src_file: &str) -> String {
     use std::path::Path;
@@ -15,7 +15,7 @@ pub fn detect_compiler(preferred: &str, src_file: &str) -> String {
 
     let is_cpp = matches!(ext.as_str(), "cpp" | "cc" | "cxx");
 
-    if is_cpp{
+    if is_cpp {
         unsafe {
             LOG.lock().unwrap().println(
                 &format_args!("Detected C++ source file based on extension '.{}'", ext),
@@ -46,12 +46,10 @@ pub fn detect_compiler(preferred: &str, src_file: &str) -> String {
         }
     }
 
-
     // 2. Try matching compilers
     let candidates = if is_cpp { CPP_COMPILERS } else { C_COMPILERS };
     for &c in candidates {
         if command_exists::command_exists(c) {
-
             return c.to_string();
         }
     }
@@ -78,7 +76,6 @@ pub fn detect_compiler(preferred: &str, src_file: &str) -> String {
     // 4. No compiler found
     String::new()
 }
-
 
 pub fn compile(compiler: &str, exe: &str, source: &str, extra: &str) -> bool {
     let mut args: Vec<String> = match compiler {
@@ -117,7 +114,7 @@ pub fn compile(compiler: &str, exe: &str, source: &str, extra: &str) -> bool {
     // Inject extra flags
     if !extra.is_empty() {
         let extra_args: Vec<String> = extra.split_whitespace().map(String::from).collect();
-       match compiler {
+        match compiler {
             "cl" => {
                 args.splice(1..1, extra_args);
             } // insert after /Fe

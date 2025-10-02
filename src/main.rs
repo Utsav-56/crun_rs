@@ -1,9 +1,9 @@
 mod command_exists;
+mod compile_helpers;
+mod doctor;
+mod fs_and_path_helpers;
 mod run_in_terminal;
 mod ulog;
-mod fs_and_path_helpers;
-mod doctor;
-mod compile_helpers;
 
 use std::env;
 use std::io::Write;
@@ -25,9 +25,9 @@ struct Flags {
     output_dir: String,
     run_args: String,
     run_in_new_terminal: bool,
-    check_only : bool,
-    list_only : bool,
-    list_for : String,
+    check_only: bool,
+    list_only: bool,
+    list_for: String,
 }
 
 fn run_command(cmd: &str, args: &[&str]) -> bool {
@@ -66,16 +66,14 @@ fn run_binary(exe: &str, run_args: &str, flags: &Flags) {
             }
         }
         return; // Prevent running the binary in the current terminal
-    }else {
+    } else {
         unsafe {
             LOG.lock()
                 .unwrap()
                 .println(&format_args!("Running in current terminal..."), None);
 
-
             LOG.lock().unwrap().clear();
         }
-
     }
 
     if !Path::new(exe).exists() {
@@ -89,22 +87,18 @@ fn run_binary(exe: &str, run_args: &str, flags: &Flags) {
     run_command(exe, &args);
 }
 
-
 fn main() {
     let (flags, mut args) = parse_flags();
 
-    if flags.list_only{
+    if flags.list_only {
         doctor::list_compilers(flags.list_for.as_str());
         return;
     }
 
     if flags.check_only {
-
         doctor::run_doctor();
         return;
     }
-
-
 
     if args.is_empty() {
         show_help();
@@ -131,7 +125,8 @@ fn main() {
 
     let exe = fs_and_path_helpers::setup_exe_path(&flags, &src, &build_dir);
 
-    let needs_recompile = flags.no_cache || fs_and_path_helpers::get_mod_time(&src) > fs_and_path_helpers::get_mod_time(&exe);
+    let needs_recompile = flags.no_cache
+        || fs_and_path_helpers::get_mod_time(&src) > fs_and_path_helpers::get_mod_time(&exe);
     let compiler = compile_helpers::detect_compiler(&flags.compiler, &src);
 
     if !needs_recompile {
@@ -208,7 +203,7 @@ fn parse_flags() -> (Flags, Vec<String>) {
             "-d" => flags.output_dir = args.get(i + 1).cloned().unwrap_or_default(),
             "-r" => flags.run_args = args.get(i + 1).cloned().unwrap_or_default(),
             "-ntw" => flags.run_in_new_terminal = true,
-            "-check"=> flags.check_only = true,
+            "-check" => flags.check_only = true,
             "-list-for" => {
                 flags.list_only = true;
                 flags.list_for = args.get(i + 1).cloned().unwrap_or_default();
@@ -230,7 +225,10 @@ fn parse_flags() -> (Flags, Vec<String>) {
             }
             other => non_flags.push(other.to_string()),
         }
-        i += if matches!(args[i].as_str(), "-c" | "-e" | "-o" | "-d" | "-r" | "-list-for") {
+        i += if matches!(
+            args[i].as_str(),
+            "-c" | "-e" | "-o" | "-d" | "-r" | "-list-for"
+        ) {
             2
         } else {
             1
@@ -268,7 +266,4 @@ fn show_help() {
     println!("  -list-all            List all available compilers");
     println!("\nExample:");
     println!("  crun -v -e \"-Wall -O2\" -r \"arg1 arg2\" my_program.c");
-
 }
-
-

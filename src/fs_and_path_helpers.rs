@@ -1,7 +1,7 @@
-use std::{fs, process};
+use crate::{Flags, LOG};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::{Flags, LOG};
+use std::{fs, process};
 
 pub fn get_mod_time(path: &str) -> SystemTime {
     fs::metadata(path)

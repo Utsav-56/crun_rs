@@ -3,7 +3,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-
 fn run_command(cmd: &str, args: &[&str]) -> bool {
     Command::new(cmd)
         .args(args)
@@ -14,7 +13,6 @@ fn run_command(cmd: &str, args: &[&str]) -> bool {
         .map(|s| s.success())
         .unwrap_or(false)
 }
-
 
 #[cfg(windows)]
 pub fn launch_in_external_terminal(binary_path: &str, args: &[&str]) -> std::io::Result<()> {
@@ -49,7 +47,10 @@ pub fn launch_in_external_terminal(binary_path: &str, args: &[&str]) -> std::io:
         "".to_string()
     };
 
-    let sh_cmd = format!("{} {} ; echo =============== Program Finished ===============; echo Press Enter to exit...; read -n 1", quoted_binary, arg_line);
+    let sh_cmd = format!(
+        "{} {} ; echo =============== Program Finished ===============; echo Press Enter to exit...; read -n 1",
+        quoted_binary, arg_line
+    );
     let cmd_str = format!("'{}'", sh_cmd);
     let script = format!(
         r#"tell application "Terminal"
@@ -62,8 +63,6 @@ end tell"#,
     Command::new("osascript").arg("-e").arg(script).spawn()?;
     Ok(())
 }
-
-
 
 #[cfg(all(unix, not(target_os = "macos")))]
 pub fn launch_in_external_terminal(binary_path: &str, args: &[&str]) -> std::io::Result<()> {
@@ -83,35 +82,75 @@ pub fn launch_in_external_terminal(binary_path: &str, args: &[&str]) -> std::io:
     // Exhaustive fallback list
     let fallback_terminals = [
         // GNOME & GTK
-        "gnome-terminal", "tilix", "terminator", "mate-terminal", "lxterminal", "xfce4-terminal",
-        "deepin-terminal", "pantheon-terminal", "elementary-terminal",
-
+        "gnome-terminal",
+        "tilix",
+        "terminator",
+        "mate-terminal",
+        "lxterminal",
+        "xfce4-terminal",
+        "deepin-terminal",
+        "pantheon-terminal",
+        "elementary-terminal",
         // KDE & Qt
-        "konsole", "yakuake", "qterminal",
-
+        "konsole",
+        "yakuake",
+        "qterminal",
         // Lightweight / minimalist
-        "alacritty", "kitty", "urxvt", "rxvt", "st", "eterm", "sakura", "tilda", "guake",
-        "cool-retro-term", "lxterm", "mlterm", "roxterm", "termite", "xvt",
-
+        "alacritty",
+        "kitty",
+        "urxvt",
+        "rxvt",
+        "st",
+        "eterm",
+        "sakura",
+        "tilda",
+        "guake",
+        "cool-retro-term",
+        "lxterm",
+        "mlterm",
+        "roxterm",
+        "termite",
+        "xvt",
         // Wayland-native or experimental
-        "foot", "wezterm", "warp-terminal",
-
+        "foot",
+        "wezterm",
+        "warp-terminal",
         // Others / niche
-        "hyper", "terminal", "gnustep-terminal", "terminology", "yeahconsole", "evilvte",
-        "gnome-console", "blackbox-terminal", "wterm", "x3270", "aterm", "zterm", "finalterm"
+        "hyper",
+        "terminal",
+        "gnustep-terminal",
+        "terminology",
+        "yeahconsole",
+        "evilvte",
+        "gnome-console",
+        "blackbox-terminal",
+        "wterm",
+        "x3270",
+        "aterm",
+        "zterm",
+        "finalterm",
     ];
 
     let terminal = primary_terminals
         .iter()
         .chain(fallback_terminals.iter())
         .find(|term| crate::command_exists::command_exists(term))
-        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "No terminal emulator found"))?;
+        .ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::NotFound, "No terminal emulator found")
+        })?;
 
     let args = match *terminal {
         // Terminals that require "--" before bash -c
-        "gnome-terminal" | "xfce4-terminal" | "lxterminal" | "mate-terminal" |
-        "terminator" | "tilix" | "deepin-terminal" | "pantheon-terminal" |
-        "elementary-terminal" | "gnome-console" => vec!["--", "bash", "-c", &sh_cmd],
+        "gnome-terminal"
+        | "xfce4-terminal"
+        | "lxterminal"
+        | "mate-terminal"
+        | "terminator"
+        | "tilix"
+        | "deepin-terminal"
+        | "pantheon-terminal"
+        | "elementary-terminal"
+        | "gnome-console" => vec!["--", "bash", "-c", &sh_cmd],
 
         // Most others use -e
         _ => vec!["-e", "bash", "-c", &sh_cmd],

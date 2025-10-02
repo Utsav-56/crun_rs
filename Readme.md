@@ -3,7 +3,7 @@
 A fast and simple command-line tool to compile and run C/C++ files with automatic compiler detection, caching, and flexible configuration options.
 
 **Note**: This is a port of the original CRUN created in Golang. See the [original repository](https://github.com/utsav-56/crun).
-the current port was vibe coded (I don't know rust so much), I am not ashamed to say that most of the code about 98% of the rust version is AI,
+the current port was vibe coded (I don't know rust so much), I am not ashamed to say that most of the code about 60% of the rust version is AI,
 
 the original Golang code is self written by me and is stable and tested, this port is made just because the rust has smaller binary size.
 
@@ -88,23 +88,48 @@ crun -o myprogram -d ./bin main.c
 | ----- | ------------ | ------------------------------- | ---------------------------- |
 | `-r`  | `--run-args` | Arguments to pass to the binary | `crun -r "arg1 arg2" main.c` |
 
+
+### Machine Checkup Flags
+
+| Short      | Long         | Description                                           | Example                      |
+| ---------- | ------------ | ----------------------------------------------------- | ---------------------------- |
+| `-check`   | `--doctor`   | Only check for any problem in your machine            | `crun -check`                |
+| `-list-for`|              | List available compilers for C, C++, or all           | `crun -list-for c`           |
+| `-list-all`|              | List all available compilers                          | `crun -list-all`             |
+
 ## Supported Compilers
 
-The tool automatically detects and uses the first available compiler in this order:
+The tool automatically detects and uses the first available compiler according to the source file in this order:
 
-1. **clang** - LLVM C/C++ compiler
-2. **gcc** - GNU Compiler Collection
-3. **zig** - Zig compiler (using `zig cc`)
-4. **cl** - Microsoft Visual C++ compiler
-5. **bytes** - Custom compiler (if available)
+### For C:
+- **gcc** - GNU Compiler Collection
+- **clang** - LLVM C/C++ compiler
+- **zig** - Zig compiler (using `zig cc`)
+- **cl** - Microsoft Visual C++ compiler
+- **icc** - Intel C Compiler
+- **tcc** - Tiny C Compiler
+- **pcc** - Portable C Compiler
+
+### For C++:
+- **g++** - GNU C++ Compiler
+- **clang++** - LLVM C++ compiler
+- **cl** - Microsoft Visual C++ compiler
+- **icpc** - Intel C++ Compiler
+
 
 ### Manual Compiler Selection
+
+You can also provide a specific compiler using the `-c` or `--compiler` flag.
+both absolute path as well as command name is supported.
+
+Note: If absolute path is not given, Make sure the compiler is in your system's PATH.
 
 ```bash
 # Use specific compiler
 crun --compiler gcc main.c
 crun -c clang main.cpp
 crun -c zig main.c
+crun -c "C:\Path\To\cl.exe" main.cpp
 ```
 
 ## File Extension Handling
@@ -214,6 +239,8 @@ args: ["/O2", "/W4", "/Fe:output.exe", "source.c"]
 args: ["cc", "-o", "output.exe", "source.c"]
 ```
 
+###### and so on for other compilers...
+
 ## Directory Structure
 
 ```
@@ -243,13 +270,14 @@ your-project/
 
     ```bash
     # Check available compilers
-    crun -h  # Shows supported compilers
+    crun -list-all  # Shows supported compilers available in your PATH
 
     # Use auto-detection instead
-    crun main.c
+    crun main.c # It will also fall if no compiler is found
     ```
 
 3. **"Failed to compile the source file"**
+
 
     ```bash
     # Use verbose mode to see full output
@@ -257,6 +285,10 @@ your-project/
 
     # Check syntax and includes
     crun -e "-Wall" main.c
+   
+    # If using custom flags, ensure they are correct
+
+      
     ```
 
 ## Environment Variables
@@ -299,6 +331,10 @@ Most IDEs can be configured to use CRUN as a build tool:
 
 **VS Code tasks.json**:
 
+For vs code we provide an extension [here](https://marketplace.visualstudio.com/items?itemName=Utsav-56.crun)
+you can search it in the extensions tab of vs code and install it.
+
+Or you can manually add a task in `.vscode/tasks.json`:
 ```json
 {
 	"label": "crun build",
@@ -349,11 +385,16 @@ case "-x":
     flags.newFlag = true
 ```
 
-## License
 
-[Add your license information here]
 
 ## Changelog
+
+### Version 1.4.0
+- Added support for C++ source files (.cpp, .cc, .cxx)
+- Added more compilers support (icc, icpc, tcc, pcc)
+- Improved compiler detection logic
+- Enhanced error messages for better clarity
+- Improved external terminal support
 
 ### Version 1.3.0
 - Fixed minor bugs and improved stability
@@ -380,4 +421,4 @@ case "-x":
 
 ---
 
-**Made with ❤️ for C/C++ developers who want fast, simple compilation workflows.**
+**Made with ❤️ by Utsav-56 for C/C++ developers who want fast, simple compilation workflows.**
