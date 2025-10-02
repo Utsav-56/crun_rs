@@ -1,5 +1,5 @@
 use std::process;
-use crate::{command_exists, LOG, SUPPORTED_COMPILERS};
+use crate::{command_exists, LOG};
 
 pub fn detect_compiler(preferred: &str, src_file: &str) -> String {
     use std::path::Path;
@@ -14,6 +14,22 @@ pub fn detect_compiler(preferred: &str, src_file: &str) -> String {
         .to_lowercase();
 
     let is_cpp = matches!(ext.as_str(), "cpp" | "cc" | "cxx");
+
+    if is_cpp{
+        unsafe {
+            LOG.lock().unwrap().println(
+                &format_args!("Detected C++ source file based on extension '.{}'", ext),
+                None,
+            );
+        }
+    } else {
+        unsafe {
+            LOG.lock().unwrap().println(
+                &format_args!("Detected C source file based on extension '.{}'", ext),
+                None,
+            );
+        }
+    }
 
     // 1. Preferred compiler override
     if !preferred.is_empty() {
@@ -30,10 +46,12 @@ pub fn detect_compiler(preferred: &str, src_file: &str) -> String {
         }
     }
 
+
     // 2. Try matching compilers
     let candidates = if is_cpp { CPP_COMPILERS } else { C_COMPILERS };
     for &c in candidates {
         if command_exists::command_exists(c) {
+
             return c.to_string();
         }
     }
@@ -51,6 +69,7 @@ pub fn detect_compiler(preferred: &str, src_file: &str) -> String {
                         None,
                     );
                 }
+                println!("Detected compiler: {}", c);
                 return c.to_string();
             }
         }
@@ -62,19 +81,12 @@ pub fn detect_compiler(preferred: &str, src_file: &str) -> String {
 
 
 pub fn compile(compiler: &str, exe: &str, source: &str, extra: &str) -> bool {
-    use std::path::Path;
-
-    let is_cpp = Path::new(source)
-        .extension()
-        .map(|ext| ext == "cpp" || ext == "cxx" || ext == "cc")
-        .unwrap_or(false);
-
-    let mut args: Vec<String> = match (compiler, is_cpp) {
+    let mut args: Vec<String> = match compiler {
         // GCC family
-        ("gcc", false) | ("g++", true) => vec!["-o".into(), exe.into(), source.into()],
+        "gcc" | "g++" => vec!["-o".into(), exe.into(), source.into()],
 
         // Clang family
-        ("clang", false) | ("clang++", true) => vec![
+        "clang" | "clang++" => vec![
             "-o".into(),
             exe.into(),
             source.into(),
@@ -83,46 +95,38 @@ pub fn compile(compiler: &str, exe: &str, source: &str, extra: &str) -> bool {
         ],
 
         // MSVC
-        ("cl", _) => vec![format!("/Fe:{}", exe), source.into()],
+        "cl" => vec![format!("/Fe:{}", exe), source.into()],
 
-        // Zig as C/C++ compiler
-        ("zig", _) => vec!["cc".into(), "-o".into(), exe.into(), source.into()],
+        // Zig
+        "zig" => vec!["cc".into(), "-o".into(), exe.into(), source.into()],
 
-        // Intel C/C++ Compiler
-        ("icc", false) | ("icpc", true) => vec!["-o".into(), exe.into(), source.into()],
+        // Intel
+        "icc" | "icpc" => vec!["-o".into(), exe.into(), source.into()],
 
-        // TinyCC
-        ("tcc", _) => vec!["-o".into(), exe.into(), source.into()],
+        // Lightweight / niche
+        "tcc" | "pcc" | "lcc" => vec!["-o".into(), exe.into(), source.into()],
+        "wcl" => vec![format!("-fe={}", exe), source.into()],
+        "bcc32" => vec![format!("-e{}", exe), source.into()],
+        "dmc" => vec![format!("-o{}", exe), source.into()],
+        "sdcc" => vec!["-o".into(), exe.into(), source.into()],
 
-        // Portable C Compiler
-        ("pcc", _) => vec!["-o".into(), exe.into(), source.into()],
-
-        // LLVM's LCC
-        ("lcc", _) => vec!["-o".into(), exe.into(), source.into()],
-
-        // Watcom
-        ("wcl", _) => vec![format!("-fe={}", exe), source.into()],
-
-        // Borland
-        ("bcc32", _) => vec![format!("-e{}", exe), source.into()],
-
-        // Digital Mars
-        ("dmc", _) => vec![format!("-o{}", exe), source.into()],
-
-        // SDCC (C only, embedded)
-        ("sdcc", false) => vec!["-o".into(), exe.into(), source.into()],
-
-        // Default fallback
-        (_, _) => vec!["-o".into(), exe.into(), source.into()],
+        // Fallback
+        _ => vec!["-o".into(), exe.into(), source.into()],
     };
 
     // Inject extra flags
     if !extra.is_empty() {
         let extra_args: Vec<String> = extra.split_whitespace().map(String::from).collect();
-        match compiler {
-            "cl" => args.splice(1..1, extra_args), // insert after /Fe
-            "bcc32" | "dmc" | "wcl" => args.extend(extra_args), // append
-            _ => args.splice(args.len() - 1..args.len() - 1, extra_args), // before source
+       match compiler {
+            "cl" => {
+                args.splice(1..1, extra_args);
+            } // insert after /Fe
+            "bcc32" | "dmc" | "wcl" => {
+                args.extend(extra_args);
+            } // append
+            _ => {
+                args.splice(args.len() - 1..args.len() - 1, extra_args);
+            } // before source
         }
     }
 

@@ -12,8 +12,6 @@ use std::process::{self, Command, Stdio};
 use std::sync::LazyLock;
 use ulog::Ulog;
 
-static SUPPORTED_COMPILERS: &[&str] = &["clang", "gcc", "zig", "cl", "bytes"];
-
 static LOG: LazyLock<std::sync::Mutex<Ulog>> = LazyLock::new(|| std::sync::Mutex::new(Ulog::new()));
 
 #[derive(Default)]
@@ -29,6 +27,7 @@ struct Flags {
     run_in_new_terminal: bool,
     check_only : bool,
     list_only : bool,
+    list_for : String,
 }
 
 fn run_command(cmd: &str, args: &[&str]) -> bool {
@@ -95,11 +94,12 @@ fn main() {
     let (flags, mut args) = parse_flags();
 
     if flags.list_only{
-        doctor::list_compilers();
+        doctor::list_compilers(flags.list_for.as_str());
         return;
     }
 
     if flags.check_only {
+
         doctor::run_doctor();
         return;
     }
@@ -209,14 +209,28 @@ fn parse_flags() -> (Flags, Vec<String>) {
             "-r" => flags.run_args = args.get(i + 1).cloned().unwrap_or_default(),
             "-ntw" => flags.run_in_new_terminal = true,
             "-check"=> flags.check_only = true,
-            "-list"=> flags.list_only = true,
+            "-list-for" => {
+                flags.list_only = true;
+                flags.list_for = args.get(i + 1).cloned().unwrap_or_default();
+                if flags.list_for.is_empty() {
+                    println!("-list-for requires an argument (c or cpp or all)");
+                    println!("Use -list-all to list all compilers");
+                    process::exit(1);
+                }
+            }
+
+            "-list-all" => {
+                flags.list_only = true;
+                flags.list_for = "all".to_string();
+            }
+
             s if s.starts_with('-') => {
                 println!("Unknown flag {}", s);
                 process::exit(1);
             }
             other => non_flags.push(other.to_string()),
         }
-        i += if matches!(args[i].as_str(), "-c" | "-e" | "-o" | "-d" | "-r") {
+        i += if matches!(args[i].as_str(), "-c" | "-e" | "-o" | "-d" | "-r" | "-list-for") {
             2
         } else {
             1
@@ -229,16 +243,32 @@ fn show_help() {
     println!("crun - Compile and run C/C++ files quickly");
     println!("\nUsage: crun [flags] <filename>");
     println!("\nFlags:");
+
+    // general releted
     println!("  -v, --verbose        Verbose mode");
     println!("  -n, --recompile      Always recompile");
     println!("  -h, --help           Show help");
+
+    // compiler releted
     println!("  -c, --compiler <c>   Choose compiler");
     println!("  -e, --extra <flags>  Extra compiler flags");
+
+    // output releted
     println!("  -o, --output <name>  Output binary name");
     println!("  -d, --directory <d>  Output directory");
+
+    // run releted
+
     println!("  -r, --run-args <a>   Args to binary");
     println!("  -ntw, --new-terminal Run in new terminal");
+
+    // checkup releted
     println!("  -check, --doctor     Only check for any problem in your machine");
+    println!("  -list-for <c/cpp/all> List available compilers for C or C++ or all");
+    println!("  -list-all            List all available compilers");
+    println!("\nExample:");
+    println!("  crun -v -e \"-Wall -O2\" -r \"arg1 arg2\" my_program.c");
+
 }
 
 

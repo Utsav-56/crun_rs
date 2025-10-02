@@ -22,15 +22,18 @@ pub fn log_fail(message: &str) {
 
 
 pub(crate) fn run_doctor() {
-    let SUPPORTED_COMPILERS: &[&str] = &["clang", "gcc", "zig", "cl"];
+
+    static C_COMPILERS: &[&str] = &["gcc", "clang", "zig", "cl", "icc", "tcc", "pcc"];
+    static CPP_COMPILERS: &[&str] = &["g++", "clang++", "cl", "icpc"];
+
 
     let mut foundCount = 0;
 
     println!("\x1b[1mRunning doctor...\n \x1b[0m"); // bold text
 
-    println!("Checking for supported compilers...");
+    println!("Checking for C compilers...");
 
-    for &compiler in SUPPORTED_COMPILERS {
+    for &compiler in C_COMPILERS {
         let compailer_path = find_command(compiler);
         if !compailer_path.is_empty() {
             log_pass(&format!("Found {} at {}", compiler, compailer_path));
@@ -39,20 +42,49 @@ pub(crate) fn run_doctor() {
     }
 
     if foundCount == 0 {
-        log_fail("No supported compilers found. Please install at least one of the following compilers: clang, gcc, zig, cl.");
+        log_fail("No supported compilers for C found. Please install at least one of the following compilers: clang, gcc, zig, cl, icc, tcc, pcc.");
     } else if foundCount == 1 {
-        log_pass(&format!("Found {} supported compiler(s).", foundCount));
+        log_pass(&format!("Found {} supported compiler for C.", foundCount));
     }else {
-        println!("Needed only 1 but Found {} supported compilers. (very good, )", foundCount);
+        println!("Needed only 1 but Found {} C compilers. (very good, )", foundCount);
     }
-}
 
-pub fn list_compilers(){
-    let SUPPORTED_COMPILERS: &[&str] = &["clang", "gcc", "zig", "cl"];
-    for &compiler in SUPPORTED_COMPILERS {
+    println!("\nChecking for C++ compilers...");
+    foundCount = 0;
+    for &compiler in CPP_COMPILERS {
         let compailer_path = find_command(compiler);
         if !compailer_path.is_empty() {
-            println!("{}", compiler)
+            log_pass(&format!("Found {} at {}", compiler, compailer_path));
+            foundCount += 1;
+        }
+    }
+    if foundCount == 0 {
+        log_fail("No supported compilers for C++ found. Please install at least one of the following compilers: g++, clang++, cl, icpc.");
+    } else if foundCount == 1 {
+        log_pass(&format!("Found {} supported compiler for C++.", foundCount));
+    }else {
+        println!("Needed only 1 but Found {} C++ compilers. (very good, )", foundCount);
+    }
+    println!("\nDoctor finished.");
+
+
+
+
+
+}
+
+pub fn list_compilers(src_type: &str) {
+
+    let compilers : &[&str] = match src_type {
+        "c" => &["gcc", "clang", "zig", "cl", "icc", "tcc", "pcc"],
+        "cpp" => &["g++", "clang++", "cl", "icpc"],
+        "all" => &["gcc", "clang", "zig", "cl", "icc", "tcc", "pcc", "g++", "clang++", "icpc"],
+        _ => &[],
+    };
+
+    for &compiler in compilers {
+        if !find_command(compiler).is_empty() {
+            println!("{}", compiler);
         }
     }
 }
