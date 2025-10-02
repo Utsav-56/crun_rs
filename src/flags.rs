@@ -41,6 +41,7 @@ fn flag_alias(arg: &str) -> &str {
         "--run-args" => "-r",
         "--new-terminal" => "-ntw",
         "--doctor" => "-check",
+        "doctor" => "-check",
         "format" => "fmt",
         other => other,
     }
@@ -57,6 +58,11 @@ pub fn parse_flags() -> (Flags, Vec<String>) {
 
     while i < args.len() {
         match args[i].as_str() {
+
+            "doctor" | "-check" => {
+                flags.check_only = true;
+                break; // No more flags to process after doctor
+            }
 
             "fmt" => {
                 flags.fmt_only = true;

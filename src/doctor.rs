@@ -105,6 +105,7 @@ fn check_compiler_validity(compiler: &str, source: &Path) -> bool {
 pub(crate) fn run_doctor() {
     static C_COMPILERS: &[&str] = &["gcc", "clang", "zig", "cl", "icc", "tcc", "pcc"];
     static CPP_COMPILERS: &[&str] = &["g++", "clang++", "cl", "icpc"];
+    static FORMATTERS: &[&str] = &["clang-format", "astyle", "uncrustify", "indent"];
 
     let (c_src, cpp_src) = prepare_dummy_sources();
 
@@ -149,6 +150,19 @@ pub(crate) fn run_doctor() {
     }
     if found_cpp == 0 {
         log_fail("No working C++ compilers found.");
+    }
+
+    println!("\nChecking for formatters...");
+    let mut found_fmt = 0;
+    for &formatter in FORMATTERS {
+        let path = find_command(formatter);
+        if !path.is_empty() {
+            log_pass(&format!("{} found at {}", formatter, path));
+            found_fmt += 1;
+        }
+    }
+    if found_fmt == 0 {
+        log_fail("No code formatters found.");
     }
 
     println!("\nDoctor finished.");

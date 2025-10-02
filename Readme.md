@@ -95,6 +95,9 @@ crun -o myprogram -d ./bin main.c
 | `-r`  | `--run-args` | Arguments to pass to the binary | `crun -r "arg1 arg2" main.c` |
 
 
+
+
+
 ### Machine Checkup Flags
 
 | Short      | Long         | Description                                           | Example                      |
@@ -102,6 +105,13 @@ crun -o myprogram -d ./bin main.c
 | `-check`   | `--doctor`   | Only check for any problem in your machine            | `crun -check`                |
 | `-list-for`|              | List available compilers for C, C++, or all           | `crun -list-for c`           |
 | `-list-all`|              | List all available compilers                          | `crun -list-all`             |
+
+### Formatting a file
+| Short | Long      | Description                     | Example                     |
+| ----- | --------- | ------------------------------- | --------------------------- |
+| `fmt` | `format` | Format the source file using clang-format | `crun fmt main.c` |
+
+
 
 ## Supported Compilers
 
