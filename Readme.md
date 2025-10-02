@@ -16,7 +16,12 @@ the original Golang code is self written by me and is stable and tested, this po
 - **Extension Auto-Detection**: Automatically finds source files even without extensions
 - **Custom Output Control**: Specify output names and directories
 - **Runtime Arguments**: Pass arguments directly to compiled binaries
-- **External Terminal Support**: Option to run programs in a new terminal window (`-ntw` flag)
+- **External Terminal Support**: Option to run programs in a new external terminal window (`-ntw` flag)
+- **Verbose Mode**: Detailed output for debugging compilation issues
+- **Machine Checkup**: Check for compiler availability and system readiness (via `-check` flag)
+- **Template Initialization**: Create source files with boilerplate code using `init` command
+- **Supports C++**: Compile and run C++ files with the same ease as C files
+- **Multiple Compiler Support**: Choose from a variety of compilers including gcc, g++, clang, clang++, zig, cl, icc, icpc, tcc, and pcc
 
 ## Installation
 
@@ -61,11 +66,12 @@ crun -o myprogram -d ./bin main.c
 
 ### Core Flags
 
-| Short | Long          | Description                           | Example          |
-| ----- | ------------- | ------------------------------------- | ---------------- |
-| `-v`  | `--verbose`   | Verbose mode - don't clear log output | `crun -v main.c` |
-| `-n`  | `--recompile` | Always recompile source file          | `crun -n main.c` |
-| `-h`  | `--help`      | Show help message                     | `crun -h`        |
+| Short | Long          | Description                                                                               | Example            |
+| ----- | ------------- |-------------------------------------------------------------------------------------------|--------------------|
+| `init`|               | Creates a source file with template code, (uses .c extension if no extension is provided) | `crun init main.c` |
+| `-v`  | `--verbose`   | Verbose mode - don't clear log output                                                     | `crun -v main.c`   |
+| `-n`  | `--recompile` | Always recompile source file                                                              | `crun -n main.c`   |
+| `-h`  | `--help`      | Show help message                                                                         | `crun -h`          |
 
 ### Compiler Control
 
@@ -165,6 +171,13 @@ crun --recompile main.c
 ## Advanced Usage Examples
 
 ### Development Workflow
+
+```bash
+crun init hello        # creates hello.c
+crun init hello.cpp    # creates hello.cpp
+crun init hello.cxx    # creates hello.cxx
+```
+
 
 ```bash
 # Debug build with all warnings

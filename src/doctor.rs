@@ -37,10 +37,10 @@ pub fn list_compilers(src_type: &str) {
     }
 }
 
+use crate::compile_helpers::compile;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
-use crate::compile_helpers::compile;
 
 fn prepare_dummy_sources() -> (PathBuf, PathBuf) {
     let home = if cfg!(windows) {
@@ -54,7 +54,6 @@ fn prepare_dummy_sources() -> (PathBuf, PathBuf) {
 
     let c_path = base.join("dummy.c");
     let cpp_path = base.join("dummy.cpp");
-
 
     let c_code = r#"#include <stdio.h>
 int main() {
@@ -81,7 +80,12 @@ fn check_compiler_validity(compiler: &str, source: &Path) -> bool {
 
     let exe_path = source.with_extension("out");
 
-    let status = compile(compiler, exe_path.to_str().unwrap(), source.to_str().unwrap(), "");
+    let status = compile(
+        compiler,
+        exe_path.to_str().unwrap(),
+        source.to_str().unwrap(),
+        "",
+    );
 
     if status {
         let run_status = Command::new(&exe_path)
@@ -149,7 +153,6 @@ pub(crate) fn run_doctor() {
 
     println!("\nDoctor finished.");
 }
-
 
 //
 // fn detect_compiler_version(compiler: &str) -> String {

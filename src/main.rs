@@ -2,6 +2,7 @@ mod command_exists;
 mod compile_helpers;
 mod doctor;
 mod fs_and_path_helpers;
+mod init_file;
 mod run_in_terminal;
 mod ulog;
 
@@ -28,6 +29,9 @@ struct Flags {
     check_only: bool,
     list_only: bool,
     list_for: String,
+
+    init_only: bool,
+    init_filename: String,
 }
 
 fn run_command(cmd: &str, args: &[&str]) -> bool {
@@ -219,6 +223,26 @@ fn parse_flags() -> (Flags, Vec<String>) {
                 flags.list_for = "all".to_string();
             }
 
+            "init" => {
+                flags.init_only = true;
+                flags.init_filename = args.get(i + 1).cloned().unwrap_or("main.c".to_string());
+                if flags.init_filename.is_empty() {
+                    flags.init_filename = "main.c".to_string();
+                }
+                let status = init_file::init_source_file(&flags.init_filename);
+                match status {
+                    Ok(_) => {
+                        // Successfully created or already exists
+                        println!("Initialized new file: {}", flags.init_filename);
+                        process::exit(0);
+                    }
+                    Err(_) => {
+                        println!("Failed to create file: {}", flags.init_filename);
+                        process::exit(1);
+                    }
+                }
+            }
+
             s if s.starts_with('-') => {
                 println!("Unknown flag {}", s);
                 process::exit(1);
@@ -227,7 +251,7 @@ fn parse_flags() -> (Flags, Vec<String>) {
         }
         i += if matches!(
             args[i].as_str(),
-            "-c" | "-e" | "-o" | "-d" | "-r" | "-list-for"
+            "-c" | "-e" | "-o" | "-d" | "-r" | "-list-for" | "init"
         ) {
             2
         } else {
@@ -241,6 +265,8 @@ fn show_help() {
     println!("crun - Compile and run C/C++ files quickly");
     println!("\nUsage: crun [flags] <filename>");
     println!("\nFlags:");
+
+    println!("  init <filename>      Initialize a new C/C++ file with a template code");
 
     // general releted
     println!("  -v, --verbose        Verbose mode");
@@ -265,5 +291,8 @@ fn show_help() {
     println!("  -list-for <c/cpp/all> List available compilers for C or C++ or all");
     println!("  -list-all            List all available compilers");
     println!("\nExample:");
+    println!("  crun init my_program.c");
+    println!("  crun init myprogram             // creates myprogram.c by default");
+
     println!("  crun -v -e \"-Wall -O2\" -r \"arg1 arg2\" my_program.c");
 }
