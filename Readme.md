@@ -412,6 +412,10 @@ case "-x":
 
 ## Changelog
 
+### Version 1.5.0
+- Added support for formatters (clang-format, uncrustify, astyle, indent)
+- Added `fmt` or `format` command to format source files
+
 ### Version 1.4.0
 - Added support for C++ source files (.cpp, .cc, .cxx)
 - Added more compilers support (icc, icpc, tcc, pcc)
