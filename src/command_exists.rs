@@ -1,10 +1,10 @@
-use std::path::Path;
 use std::env;
+use std::path::Path;
 
 #[cfg(unix)]
 fn is_executable(path: &Path) -> bool {
-    use std::os::unix::fs::PermissionsExt;
     use std::fs;
+    use std::os::unix::fs::PermissionsExt;
     fs::metadata(path)
         .map(|m| m.is_file() && (m.permissions().mode() & 0o111 != 0))
         .unwrap_or(false)
@@ -40,4 +40,24 @@ pub fn command_exists(cmd: &str) -> bool {
             #[allow(unreachable_code)]
             false
         })
+}
+
+pub fn find_command(cmd: &str) -> String {
+    if let Some(paths) = env::var_os("PATH") {
+        for dir in env::split_paths(&paths) {
+            let candidate = dir.join(cmd);
+            if is_executable(&candidate) {
+                return candidate.to_string_lossy().to_string();
+            }
+            #[cfg(windows)]
+            {
+                for ext in ["exe", "bat", "cmd", "com"] {
+                    if is_executable(&candidate.with_extension(ext)) {
+                        return candidate.with_extension(ext).to_string_lossy().to_string();
+                    }
+                }
+            }
+        }
+    }
+    String::new()
 }
